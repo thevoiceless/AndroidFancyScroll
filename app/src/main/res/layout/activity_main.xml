@@ -14,19 +14,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <FrameLayout
-                android:id="@+id/coverFrame"
+            <ImageView
+                android:id="@+id/cover"
                 android:layout_width="match_parent"
-                android:layout_height="270dp">
-
-                <ImageView
-                    android:id="@+id/cover"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentTop="true"
-                    android:src="@drawable/cover"/>
-
-            </FrameLayout>
+                android:layout_height="270dp"
+                android:layout_alignParentTop="true"
+                android:src="@drawable/cover"/>
 
             <FrameLayout
                 android:layout_width="match_parent"
@@ -37,7 +30,7 @@
                 android:id="@+id/photo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignBottom="@id/coverFrame"
+                android:layout_alignBottom="@id/cover"
                 android:layout_centerHorizontal="true"
                 android:layout_marginBottom="-40dp"
                 android:src="@drawable/photo"/>
