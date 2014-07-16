@@ -1,7 +1,7 @@
 package thevoiceless.fancyscroll;
 
 /**
- * Created by riley on 7/14/14.
+ * Credit goes to http://stackoverflow.com/a/3952629/1693087
  */
 public interface ScrollViewListener {
 

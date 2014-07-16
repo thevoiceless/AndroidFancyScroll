@@ -3,6 +3,7 @@ package thevoiceless.fancyscroll;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.view.GravityCompat;
@@ -12,6 +13,7 @@ import android.view.Display;
 import android.view.MenuItem;
 import android.view.Surface;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -41,6 +43,7 @@ public class MainActivity extends Activity implements ScrollViewListener {
         drawerToggle = new ActionBarDrawerToggle(this, drawer, R.drawable.ic_drawer, R.string.drawer_open, R.string.drawer_close) {
             @Override
             public void onDrawerSlide(View drawerView, float slideOffset) {
+                // Use the opacity at the time the drawer opens as the minumum to avoid flashing
                 actionBarBG.setAlpha(mapFractionToAlpha(slideOffset, actionBarOpacity));
                 super.onDrawerSlide(drawerView, slideOffset);
             }
@@ -65,7 +68,6 @@ public class MainActivity extends Activity implements ScrollViewListener {
     @Override
     protected void onResume() {
         super.onResume();
-
         setImageViewScaling();
     }
 
@@ -78,41 +80,53 @@ public class MainActivity extends Activity implements ScrollViewListener {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        // Save the scroll position
         outState.putInt(KEY_SCROLL_POS, scrollView.getScrollY());
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
+        // Get the saved scroll position
         final int position = savedInstanceState.getInt(KEY_SCROLL_POS);
 
+        // Credit goes to http://stackoverflow.com/a/15301092/1693087
+        // We can't call scrollTo() until the ScrollView has finished setting up its layout
+        // Supposedly any Runnables posted to a View will be executed only once the View is ready
         scrollView.post(new Runnable() {
             @Override
             public void run() {
                 scrollView.scrollTo(0, position);
 
+                // We also need to set the correct transparency for the action bar if the nav drawer
+                // was open before the rotation occurred
                 if (drawer.isDrawerOpen(drawerList)) {
                     actionBarBG.setAlpha(mapFractionToAlpha(1f, actionBarOpacity));
                 }
             }
         });
 
-//        if (scrollView.getViewTreeObserver().isAlive()) {
-//            scrollView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-//                @Override
-//                public void onGlobalLayout() {
-//                    scrollView.scrollTo(0, position);
-//
-//                    if (scrollView.getViewTreeObserver().isAlive()) {
-//                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-//                            scrollView.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-//                        } else {
-//                            scrollView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-//                        }
-//                    }
-//                }
-//            });
-//        }
+        // I'll keep the alternative implementation here just in case the post() strategy turns out
+        // to be incorrect
+        /*
+        if (scrollView.getViewTreeObserver().isAlive()) {
+            scrollView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    scrollView.scrollTo(0, position);
+
+                    if (scrollView.getViewTreeObserver().isAlive()) {
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+                            // The method name changed in Jelly Bean
+                            scrollView.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                        } else {
+                            scrollView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        }
+                    }
+                }
+            });
+        }
+        */
     }
 
     @Override
@@ -123,22 +137,36 @@ public class MainActivity extends Activity implements ScrollViewListener {
         return super.onOptionsItemSelected(item);
     }
 
+    /*
+     * This is the callback used by ObservableScrollview that allows us to keep track of how far
+     * (in pixels) the user has scrolled
+     */
     @Override
     public void onScrollChanged(ObservableScrollView scrollView, int x, int y, int oldX, int oldY) {
+        // Map the visible percentage of the ImageView to the fractional opacity of the action bar
         float percentHidden = (scrollView.getScrollY() / (float) cover.getHeight());
         setActionBarOpacity(mapFractionToAlpha(percentHidden));
 
+        // Set the top padding of the ImageView to 1/2 of the scrolled distance to get the "parallax"
+        // effect, making the image look like it's scrolling slower than everything else
         int top = scrollView.getScrollY() / 2;
         cover.setPadding(0, top, 0, 0);
     }
 
+    /*
+     * Because we adjust the top padding of the image, we need to set a different ScaleType based on
+     * orientation
+     * I'm not sure how this will affect behavior in all situations; the image I used has a greater
+     * width than height, but the image is not wide enough to fill my Nexus 4's screen without scaling
+     */
     private void setImageViewScaling() {
+        //
         Display display = ((WindowManager) getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
         if (display.getRotation() == Surface.ROTATION_0 || display.getRotation() == Surface.ROTATION_180) {
-            // Portrait, use "center"
+            // Portrait, use "center" so that the image doesn't shrink as the padding is increased
             cover.setScaleType(ImageView.ScaleType.CENTER);
         } else {
-            // Landscape, use "centerCrop"
+            // Landscape, use "centerCrop" to fill the width of the screen
             cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
         }
     }

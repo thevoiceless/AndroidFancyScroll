@@ -6,7 +6,7 @@ import android.view.ViewTreeObserver;
 import android.widget.ScrollView;
 
 /**
- * Created by riley on 7/14/14.
+ * Credit goes to http://stackoverflow.com/a/3952629/1693087
  */
 public class ObservableScrollView extends ScrollView {
 
@@ -26,9 +26,6 @@ public class ObservableScrollView extends ScrollView {
 
     public void setOnScrollListener(ScrollViewListener listener) {
         onScrollListener = listener;
-    }
-
-    public void setOnGlobalLayoutListener(ViewTreeObserver.OnGlobalLayoutListener listener) {
     }
 
     @Override
