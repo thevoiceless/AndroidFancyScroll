@@ -3,6 +3,7 @@ package thevoiceless.fancyscroll;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.view.GravityCompat;
@@ -30,6 +31,24 @@ public class MainActivity extends Activity implements ScrollViewListener {
     private ImageView cover;
     private Drawable actionBarBG;
 
+    // According to http://www.cyrilmottier.com/2013/05/24/pushing-the-actionbar-to-the-next-level/
+    // this is necessary on pre-Jelly Bean devices
+    private Drawable.Callback drawableCallback = new Drawable.Callback() {
+        @Override
+        public void invalidateDrawable(Drawable who) {
+            getActionBar().setBackgroundDrawable(who);
+        }
+
+        @Override
+        public void scheduleDrawable(Drawable who, Runnable what, long when) {
+        }
+
+        @Override
+        public void unscheduleDrawable(Drawable who, Runnable what) {
+        }
+    };
+
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(WindowCompat.FEATURE_ACTION_BAR_OVERLAY);
@@ -55,6 +74,10 @@ public class MainActivity extends Activity implements ScrollViewListener {
         setActionBarOpacity(actionBarOpacity);
         getActionBar().setDisplayHomeAsUpEnabled(true);
         getActionBar().setHomeButtonEnabled(true);
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            actionBarBG.setCallback(drawableCallback);
+        }
     }
 
     @Override
