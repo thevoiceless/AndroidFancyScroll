@@ -21,7 +21,8 @@ import android.widget.ListView;
 public class MainActivity extends Activity implements ScrollViewListener {
 
     private static final String KEY_SCROLL_POS = "KEY_SCROLL_POS";
-
+    // Drawable.getAlpha() wasn't added until API 19 even though Drawable.setAlpha() has been
+    // available since API 1, so we have to keep track of the opacity ourselves
     private static int actionBarOpacity = 0;
 
     private DrawerLayout drawer;
